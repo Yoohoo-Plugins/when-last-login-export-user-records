@@ -2,8 +2,8 @@
 Contributors: andrewza, yoohooplugins, travislima
 Tags: last login, when last login, user login records, export user login records
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4GC4JEZH7KSKL
-Requires at least: 4.0
-Tested up to: 4.7.5
+Requires at least: 5.0
+Tested up to: 6.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -16,6 +16,8 @@ An add-on to When Last Login which allows you to export all user login records i
 = Features =
 * Export user login records into a CSV file
 * Export user login records into a JSON file
+* Export user records with most recent login time into a CSV file
+* Export user records with most recent login time into a JSON file
 
 == Installation ==
 1. Upload the plugin files to the '/wp-content/plugins' directory, or install the plugin through the WordPress plugins screen directly.
@@ -41,6 +43,11 @@ Yes, When Last Login - User Email is a free plugin for WordPress.
 None applicable
 
 == Changelog ==
+
+= 1.0.1 - 2017-07-31 =
+* Added in the ability to export user records
+* Separated exports between login records and user records
+* Export tab has been added to the 'When Last Login' menu
 
 = 1.0 =
 * First Release
