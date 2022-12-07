@@ -55,6 +55,11 @@ class WhenLastLoginExportUserRecords {
 
 	}
 
+	/**
+	 * Export All Login and All User Records.
+	 * 
+	 * @since 1.0
+	 */
 	public function wll_eur_export_records() {
 
 		$export_array = array();
@@ -64,6 +69,11 @@ class WhenLastLoginExportUserRecords {
 			if ( isset( $_GET['export'] ) && isset( $_GET['type'] ) ) {
 
 				if ( $_GET['export'] == 'login-records' ) {
+
+					
+					if ( ! wp_verify_nonce( $_REQUEST['nonce'], 'wll_all_login_records_nonce' ) ) {
+						return;
+					}
 
 					$args = array(
 						'posts_per_page' => -1,
@@ -104,6 +114,10 @@ class WhenLastLoginExportUserRecords {
 
 					}
 				} elseif ( $_GET['export'] == 'user-records' ) {
+
+					if ( ! wp_verify_nonce( $_REQUEST['user_nonce'], 'wll_all_user_records_nonce' ) ) {
+						return;
+					}
 
 					$users = get_users();
 
