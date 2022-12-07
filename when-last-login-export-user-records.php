@@ -83,17 +83,17 @@ class WhenLastLoginExportUserRecords {
 							$ip_address = get_post_meta( get_the_ID(), 'wll_user_ip_address', true );
 
 							if ( $ip_address == '' ) {
-								$ip_address = __( 'No IP Address Recorded', 'when-last-login-export-user-records' );
+								$ip_address = esc_html__( 'No IP Address Recorded', 'when-last-login-export-user-records' );
 							}
 
 							$email_address = get_the_author_meta( 'user_email' );
 
 							$export_array[] = array(
-								'title'         => get_the_title(),
-								'author'        => get_the_author(),
-								'email_address' => $email_address,
-								'date'          => get_the_date(),
-								'ip_address'    => $ip_address,
+								'title'         => sanitize_text_field( get_the_title() ),
+								'author'        => sanitize_text_field( get_the_author() ),
+								'email_address' => sanitize_email( $email_address ),
+								'date'          => sanitize_text_field( get_the_date() ),
+								'ip_address'    => sanitize_text_field( $ip_address ),
 							);
 
 							$export_array = apply_filters( 'wll_export_login_records_user_login_each', $export_array );
@@ -121,10 +121,10 @@ class WhenLastLoginExportUserRecords {
 						}
 
 						$export_array[] = array(
-							'display_name'  => $user->data->display_name,
-							'email_address' => $user->data->user_email,
-							'last_login'    => $formatted_logged_in,
-							'login_count'   => $logged_in_count,
+							'display_name'  => sanitize_text_field( $user->data->display_name ),
+							'email_address' => sanitize_email( $user->data->user_email ),
+							'last_login'    => sanitize_text_field( $formatted_logged_in ),
+							'login_count'   => sanitize_text_field( $logged_in_count ),
 						);
 
 						$export_array = apply_filters( 'wll_export_user_records_user_login_each', $export_array );
@@ -134,12 +134,12 @@ class WhenLastLoginExportUserRecords {
 
 				if ( $_GET['type'] == 'csv' ) {
 
-					$fileName = time() . '-when-last-login-export-' . $_GET['export'] . '.csv';
+					$fileName = time() . '-when-last-login-export-' . sanitize_text_field( $_GET['export'] ) . '.csv';
 
 					header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 					header( 'Content-Description: File Transfer' );
 					header( 'Content-type: text/csv' );
-					header( 'Content-Disposition: attachment; filename=' . $fileName );
+					header( 'Content-Disposition: attachment; filename=' . sanitize_text_field( $fileName ) );
 					header( 'Expires: 0' );
 					header( 'Pragma: public' );
 					$fh = @fopen( 'php://output', 'w' );
@@ -154,12 +154,12 @@ class WhenLastLoginExportUserRecords {
 
 				} elseif ( $_GET['type'] == 'json' ) {
 
-					$fileName = time() . '-when-last-login-export-' . $_GET['export'] . '.json';
+					$fileName = time() . '-when-last-login-export-' . sanitize_text_field( $_GET['export'] ) . '.json';
 
 					header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 					header( 'Content-Description: File Transfer' );
 					header( 'Content-type: text/json' );
-					header( 'Content-Disposition: attachment; filename=' . $fileName );
+					header( 'Content-Disposition: attachment; filename=' . sanitize_text_field( $fileName ) );
 					header( 'Expires: 0' );
 					header( 'Pragma: public' );
 					$fh = @fopen( 'php://output', 'w' );
