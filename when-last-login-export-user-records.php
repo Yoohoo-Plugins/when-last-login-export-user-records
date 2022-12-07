@@ -2,12 +2,13 @@
 /**
  * Plugin Name: When Last Login - Export User Records
  * Description: Exports all login records into a CSV file
- * Author: YooHoo Plugins
+ * Author: Yoohoo Plugins
  * Author URI: https://yoohooplugins.com
  * Version: 1.0.1
  * License: GPL2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: when-last-login-export-user-records
+ * Domain Path: /languages
  */
 
 /**
