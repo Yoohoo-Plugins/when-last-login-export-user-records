@@ -76,44 +76,69 @@ class WhenLastLoginExportUserRecords {
 						return;
 					}
 
-					$args = array(
-						'posts_per_page' => -1,
-						'post_type'      => 'wll_records',
-					);
+					// Use pagination to avoid memory exhaustion
+					$posts_per_page = 500;
+					$paged = 1;
+					$found_posts = 0;
 
-					$the_query = new WP_Query( $args );
+					// First, get total count for proper iteration
+					$count_args = array(
+						'posts_per_page' => 1,
+						'post_type'      => 'wll_records',
+						'fields'         => 'ids',
+					);
+					$count_query = new WP_Query( $count_args );
+					$total_posts = $count_query->found_posts;
 
 					$export_array[] = array( 'title', 'author', 'email_address', 'date', 'ip_address' );
 
-					if ( $the_query->have_posts() ) {
+					// Process in chunks
+					while ( $paged <= ceil( $total_posts / $posts_per_page ) ) {
+						$args = array(
+							'posts_per_page' => $posts_per_page,
+							'paged'          => $paged,
+							'post_type'      => 'wll_records',
+						);
 
-						while ( $the_query->have_posts() ) {
+						$the_query = new WP_Query( $args );
 
-							$the_query->the_post();
+						if ( $the_query->have_posts() ) {
 
-							$ip_address = get_post_meta( get_the_ID(), 'wll_user_ip_address', true );
+							while ( $the_query->have_posts() ) {
 
-							if ( $ip_address == '' ) {
-								$ip_address = esc_html__( 'No IP Address Recorded', 'when-last-login-export-user-records' );
+								$the_query->the_post();
+
+								$ip_address = get_post_meta( get_the_ID(), 'wll_user_ip_address', true );
+
+								if ( $ip_address == '' ) {
+									$ip_address = esc_html__( 'No IP Address Recorded', 'when-last-login-export-user-records' );
+								}
+
+								$email_address = get_the_author_meta( 'user_email' );
+
+								$record = array(
+									'title'         => sanitize_text_field( get_the_title() ),
+									'author'        => sanitize_text_field( get_the_author() ),
+									'email_address' => sanitize_email( $email_address ),
+									'date'          => sanitize_text_field( get_the_date() ),
+									'ip_address'    => sanitize_text_field( $ip_address ),
+								);
+
+								// Pass only current record to filter, not entire array
+								$record = apply_filters( 'wll_export_login_records_user_login_each', $record );
+								$export_array[] = $record;
+
 							}
 
-							$email_address = get_the_author_meta( 'user_email' );
-
-							$export_array[] = array(
-								'title'         => sanitize_text_field( get_the_title() ),
-								'author'        => sanitize_text_field( get_the_author() ),
-								'email_address' => sanitize_email( $email_address ),
-								'date'          => sanitize_text_field( get_the_date() ),
-								'ip_address'    => sanitize_text_field( $ip_address ),
-							);
-
-							$export_array = apply_filters( 'wll_export_login_records_user_login_each', $export_array );
-
+							wp_reset_postdata();
 						}
 
-						wp_reset_postdata();
+						$paged++;
 
+						// Clear memory
+						unset( $the_query );
 					}
+
 				} elseif ( $_GET['export'] == 'user-records' ) {
 
 					if ( ! wp_verify_nonce( $_REQUEST['user_nonce'], 'wll_all_user_records_nonce' ) ) {
@@ -135,29 +160,37 @@ class WhenLastLoginExportUserRecords {
 							$formatted_logged_in = date( 'Y-m-d H:i:s', (int) $last_logged_in );
 						}
 
-						$export_array[] = array(
+						$record = array(
 							'display_name'  => sanitize_text_field( $user->data->display_name ),
 							'email_address' => sanitize_email( $user->data->user_email ),
 							'last_login'    => sanitize_text_field( $formatted_logged_in ),
 							'login_count'   => sanitize_text_field( $logged_in_count ),
 						);
 
-						$export_array = apply_filters( 'wll_export_user_records_user_login_each', $export_array );
+						// Pass only current record to filter, not entire array
+						$record = apply_filters( 'wll_export_user_records_user_login_each', $record );
+						$export_array[] = $record;
 
 					}
 				}
 
 				if ( $_GET['type'] == 'csv' ) {
 
-					$fileName = time() . '-when-last-login-export-' . sanitize_text_field( $_GET['export'] ) . '.csv';
+					$fileName = time() . '-when-last-login-export-' . sanitize_file_name( $_GET['export'] ) . '.csv';
 
 					header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 					header( 'Content-Description: File Transfer' );
 					header( 'Content-type: text/csv' );
-					header( 'Content-Disposition: attachment; filename=' . sanitize_text_field( $fileName ) );
+					header( 'Content-Disposition: attachment; filename=' . sanitize_file_name( $fileName ) );
 					header( 'Expires: 0' );
 					header( 'Pragma: public' );
-					$fh = @fopen( 'php://output', 'w' );
+					
+					// Remove @ error suppression and add proper error handling
+					$fh = fopen( 'php://output', 'w' );
+
+					if ( false === $fh ) {
+						wp_die( esc_html__( 'Unable to open output stream for CSV export.', 'when-last-login-export-user-records' ) );
+					}
 
 					foreach ( $export_array as $record ) {
 						fputcsv( $fh, $record, ',', '"' );
@@ -169,15 +202,21 @@ class WhenLastLoginExportUserRecords {
 
 				} elseif ( $_GET['type'] == 'json' ) {
 
-					$fileName = time() . '-when-last-login-export-' . sanitize_text_field( $_GET['export'] ) . '.json';
+					$fileName = time() . '-when-last-login-export-' . sanitize_file_name( $_GET['export'] ) . '.json';
 
 					header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 					header( 'Content-Description: File Transfer' );
 					header( 'Content-type: text/json' );
-					header( 'Content-Disposition: attachment; filename=' . sanitize_text_field( $fileName ) );
+					header( 'Content-Disposition: attachment; filename=' . sanitize_file_name( $fileName ) );
 					header( 'Expires: 0' );
 					header( 'Pragma: public' );
-					$fh = @fopen( 'php://output', 'w' );
+					
+					// Remove @ error suppression and add proper error handling
+					$fh = fopen( 'php://output', 'w' );
+
+					if ( false === $fh ) {
+						wp_die( esc_html__( 'Unable to open output stream for JSON export.', 'when-last-login-export-user-records' ) );
+					}
 
 					fputs( $fh, json_encode( $export_array ) );
 
