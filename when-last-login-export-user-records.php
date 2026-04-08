@@ -11,20 +11,6 @@
  * Domain Path: /languages
  */
 
-/**
- * 1.2
- * Fixed "Export All User Records" to use WordPress timezone with get_date_from_gmt() instead of date_i18n().
- * Updated fputcsv() to include escape parameter to address PHP deprecation warning.
- * Removed unnecessary sanitization from export output (sanitization is for input/display, not file exports).
- * 
- * 1.0.1
- * Added in the ability to export user records
- * Separated export between login records and user records
- * Export tab has been added to the 'When Last Login' menu
- *
- * 1.0.0
- * Launch
- */
 class WhenLastLoginExportUserRecords {
 
     public function __construct() {
